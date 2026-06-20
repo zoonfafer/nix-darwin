@@ -9,15 +9,17 @@ let
     "defaults write ${domain} ${escapeShellArg key} ${escapeShellArg (generators.toPlist { escape = true; } value)}";
 
   defaultsToList = domain: attrs: mapAttrsToList (writeDefault domain) (filterAttrs (n: v: v != null) attrs);
-  userDefaultsToList = domain: attrs: let
-    user = escapeShellArg config.system.primaryUser;
-  in map
-    (cmd: ''launchctl asuser "$(id -u -- ${user})" sudo --user=${user} -- ${cmd}'')
-    (defaultsToList domain attrs);
+  userDefaultsToList = domain: attrs:
+    let
+      user = escapeShellArg config.system.primaryUser;
+    in
+    map
+      (cmd: ''launchctl asuser "$(id -u -- ${user})" sudo --user=${user} -- ${cmd}'')
+      (defaultsToList domain attrs);
 
   # Filter out options to not pass through
   # dock has alias options that we need to ignore
-  dockFiltered = (builtins.removeAttrs cfg.dock ["expose-group-by-app"]);
+  dockFiltered = builtins.removeAttrs cfg.dock [ "expose-group-by-app" ];
 
   # defaults
   loginwindow = defaultsToList "/Library/Preferences/com.apple.loginwindow" cfg.loginwindow;
@@ -30,6 +32,7 @@ let
   LaunchServices = userDefaultsToList "com.apple.LaunchServices" cfg.LaunchServices;
   NSGlobalDomain = userDefaultsToList "-g" cfg.NSGlobalDomain;
   menuExtraClock = userDefaultsToList "com.apple.menuextra.clock" cfg.menuExtraClock;
+  desktopservices = userDefaultsToList "com.apple.desktopservices" cfg.desktopservices;
   dock = userDefaultsToList "com.apple.dock" dockFiltered;
   finder = userDefaultsToList "com.apple.finder" cfg.finder;
   hitoolbox = userDefaultsToList "com.apple.HIToolbox" cfg.hitoolbox;
@@ -73,6 +76,7 @@ in
         "LaunchServices"
         "NSGlobalDomain"
         "menuExtraClock"
+        "desktopservices"
         "dock"
         "finder"
         "hitoolbox"
@@ -108,6 +112,7 @@ in
         LaunchServices
         NSGlobalDomain
         menuExtraClock
+        desktopservices
         dock
         finder
         hitoolbox
@@ -134,6 +139,7 @@ in
         ${concatStringsSep "\n" GlobalPreferences}
         ${concatStringsSep "\n" LaunchServices}
         ${concatStringsSep "\n" menuExtraClock}
+        ${concatStringsSep "\n" desktopservices}
         ${concatStringsSep "\n" dock}
         ${concatStringsSep "\n" finder}
         ${concatStringsSep "\n" hitoolbox}
